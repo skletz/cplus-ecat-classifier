@@ -31,8 +31,6 @@
 /* Begin PBXFileReference section */
 		7E000A87206A41090058010E /* src */ = {isa = PBXFileReference; lastKnownFileType = folder; name = src; path = ../../preClassifier/src; sourceTree = "<group>"; };
 		7E000A88206A413C0058010E /* test */ = {isa = PBXFileReference; lastKnownFileType = folder; name = test; path = ../../preClassifier/test; sourceTree = "<group>"; };
-		7E000A89206A413C0058010E /* ibs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ibs; path = ../../preClassifier/ibs; sourceTree = "<group>"; };
-		7E000A8A206A413D0058010E /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; name = include; path = ../../preClassifier/include; sourceTree = "<group>"; };
 		7E000A9A206A42070058010E /* preClassifier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = preClassifier; sourceTree = "<group>"; };
 		7E000AA6206A42CA0058010E /* util.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = util.cpp; path = ../../preClassifier/src/util.cpp; sourceTree = "<group>"; };
 		7E000AA7206A42CA0058010E /* frameClassification.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = frameClassification.cpp; path = ../../preClassifier/src/frameClassification.cpp; sourceTree = "<group>"; };
@@ -66,8 +64,6 @@
 				7E000AA6206A42CA0058010E /* util.cpp */,
 				7E000AA8206A42CA0058010E /* util.hpp */,
 				7E000A9A206A42070058010E /* preClassifier */,
-				7E000A89206A413C0058010E /* ibs */,
-				7E000A8A206A413D0058010E /* include */,
 				7E000A88206A413C0058010E /* test */,
 				7E000A87206A41090058010E /* src */,
 				7E2B58932063B92F0004B4E7 /* Products */,

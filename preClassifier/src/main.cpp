@@ -90,35 +90,52 @@ bool init(boost::program_options::variables_map _args){
         display = true;
     }
     
-    inputDir = _args["input"].as<std::string>();
-    outputDir = _args["output"].as<std::string>();
-    model = _args["model"].as<std::string>();
-    trainedModel = _args["trained"].as<std::string>();
-    mean = _args["mean"].as<std::string>();
-    labels = _args["labels"].as<std::string>();
+    if(_args.find("input") != _args.end()){
+        inputDir = _args["input"].as<std::string>();
+    }
+
+    if(_args.find("output") != _args.end()){
+        outputDir = _args["output"].as<std::string>();
+    }
+    
+    if(_args.find("model") != _args.end()){
+        model = _args["model"].as<std::string>();
+    }
+    
+    if(_args.find("mean") != _args.end()){
+        mean = _args["mean"].as<std::string>();
+    }
+    
+    if(_args.find("trained") != _args.end()){
+        trainedModel = _args["trained"].as<std::string>();
+    }
+    
+    if(_args.find("labels") != _args.end()){
+        labels = _args["labels"].as<std::string>();
+    }
 
     if (!boost::filesystem::is_directory(inputDir)) {
-        LOG(ERROR) << "Input Directory: " << inputDir << " does not exit." << std::endl;
+        LOG(ERROR) << "Input Directory: " <<  ((inputDir == "") ? "<No Parameter given>" : inputDir) << " does not exit." << std::endl;
         areArgumentsValid = false;
     }
     
     if(!boost::filesystem::exists(model)){
-        LOG(ERROR) << "Model File: " << model << " does not exit." << std::endl;
+        LOG(ERROR) << "Model File: " <<  ((model == "") ? "<No Parameter given>" : model) << " does not exit." << std::endl;
         areArgumentsValid = false;
     }
     
     if(!boost::filesystem::exists(trainedModel)){
-        LOG(ERROR) << "Trained Model File: " << trainedModel << " does not exit." << std::endl;
+        LOG(ERROR) << "Trained Model File: " << ((trainedModel == "") ? "<No Parameter given>" : trainedModel) << " does not exit." << std::endl;
         areArgumentsValid = false;
     }
     
     if(!boost::filesystem::exists(mean)){
-        LOG(ERROR) << "Mean File: " << mean << " does not exit." << std::endl;
+        LOG(ERROR) << "Mean File: " << ((mean == "") ? "<No Parameter given>" : mean) << " does not exit." << std::endl;
         areArgumentsValid = false;
     }
     
     if(!boost::filesystem::exists(labels)){
-        LOG(ERROR) << "Labels File: " << labels << " does not exit." << std::endl;
+        LOG(ERROR) << "Labels File: " <<  ((labels == "") ? "<No Parameter given>" : labels) << " does not exit." << std::endl;
         areArgumentsValid = false;
     }
     

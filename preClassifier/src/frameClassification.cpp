@@ -5,11 +5,9 @@
 
 #include <iostream>
 #include <fstream>
-#include <caffe/caffe.hpp>
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <boost/range/algorithm/count_if.hpp>
 #include <glog/logging.h>
 
 
