@@ -105,8 +105,8 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
                         output << file.filename().string() << "; ";
                         output << width << "; ";
                         output << height << "; ";
-                        output << frameCount << "; ";
                         output << std::fixed << std::setprecision(10) << fps << "; ";
+                        output << frameCount << "; ";
                         output << iFrame << "; ";
                         output << std::fixed << std::setprecision(4) << double(iFrame) / fps << "; ";
                         output << p.first << "; ";
