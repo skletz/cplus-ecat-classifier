@@ -34,10 +34,16 @@ echo "Generate File 3: " $classificaitonfile;
 echo "Indicator: " $indicator
 echo "MySQL Param: " $mysqlparam
 
-# Get the number of entries in order to get the starting ID for the classifications
-classificationId=`mysql $mysqlparam -s -e "select count(*) from autoClassifications;"`
-echo "Number of Entries in tabel autoClassifications " $classificationId
-let classificationId=classificationId+1;
+classificationId=1
+# Check if it is possible to check mysql entries, otherwise classificationId starts with 1
+if [ ! -z "$mysqlparam" ]
+then
+  echo "MySQL is possible"
+  # Get the number of entries in order to get the starting ID for the classifications
+  classificationId=`mysql $mysqlparam -s -e "select count(*) from autoClassifications;"`
+  echo "Number of entries in tabel autoClassifications " $classificationId
+  let classificationId=classificationId+1;
+fi
 
 # Remove older files for debugging mode
 rm $classificaitonfile
@@ -56,18 +62,22 @@ done
 map_labelNames=("smoke" "no smoke")
 map_labelIDs=()
 
-# Check if the labels already exists in the database
-isInTabel=`mysql $mysqlparam -s -e "select labelName from autoLabels where labelName = '${map_labelNames[0]}'"`
-labelId=0
-if [ -z "$isInTabel" ]
+# Check if it is possible to check mysql entries, otherwise labelId starts with 1
+labelId=1
+if [ ! -z "$mysqlparam" ]
 then
-  # Get the last Id from mySQL
-  labelId=`mysql $mysqlparam -s -e "select count(*) from autoLabels;"`
-  echo "Number of Entries in tabel autoLabels " $labelId
-  let labelId=labelId+1;
-else
-  labelId=`mysql $mysqlparam -s -e "select labelId from autoLabels where labelName = '${map_labelNames[0]}'"`
-  echo "LabelId of ${map_labelNames[0]} in autoLabels is" $labelId
+  # Check if the labels already exists in the database
+  isInTabel=`mysql $mysqlparam -s -e "select labelName from autoLabels where labelName = '${map_labelNames[0]}'"`
+  if [ -z "$isInTabel" ]
+  then
+    # Get the last Id from mySQL
+    labelId=`mysql $mysqlparam -s -e "select count(*) from autoLabels;"`
+    echo "Number of Entries in tabel autoLabels " $labelId
+    let labelId=labelId+1;
+  else
+    labelId=`mysql $mysqlparam -s -e "select labelId from autoLabels where labelName = '${map_labelNames[0]}'"`
+    echo "LabelId of ${map_labelNames[0]} in autoLabels is" $labelId
+  fi
 fi
 
 sleep 1
@@ -294,10 +304,14 @@ IFS=$OLDIFS
 now=$(date '+%d/%m/%Y %H:%M:%S');
 echo "Script finised: $now";
 
-if [ -z "$isInTabel" ]
+# Insert only if mysql option is possible
+if [ ! -z "$mysqlparam" ]
 then
-  mysql $mysqlparam < $labelfile
-fi
+  if [ -z "$isInTabel" ]
+  then
+    mysql $mysqlparam < $labelfile
+  fi
 
-mysql $mysqlparam < $classificaitonfile
-mysql $mysqlparam < $filterfile
+  mysql $mysqlparam < $classificaitonfile
+  mysql $mysqlparam < $filterfile
+fi
