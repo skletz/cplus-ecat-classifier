@@ -110,7 +110,7 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
                         output << iFrame << "; ";
                         output << std::fixed << std::setprecision(4) << double(iFrame) / fps << "; ";
                         output << p.first << "; ";
-                        output << std::fixed << std::setprecision(10) << p.second;
+                        output << std::fixed << std::setprecision(7) << p.second;
                         output << std::endl;
                     }
 
