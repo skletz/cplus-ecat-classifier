@@ -34,7 +34,7 @@ public:
     void run(std::string _inputDir, std::string _outputDir);
     
 private:
-
+    
 };
 
 #endif /* frameClassification.hpp */

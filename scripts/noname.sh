@@ -21,11 +21,12 @@ output2=$3
 output3=$4
 indicator=$5
 mysqlparam=$6
+doAvgCalculation=$7
 
 labelfile=$output1"_"$indicator".sql";
 filterfile=$(dirname $output2)"/"$(basename $csvfile)"_"$(basename $output2)"_"$indicator".sql";
 classificaitonfile=$(dirname $output3)"/"$(basename $csvfile)"_"$(basename $output3)"_"$indicator".sql";
-sleep 10
+#sleep 10
 
 echo "File to process: " $csvfile;
 echo "Generate File 1: " $labelfile;
@@ -138,7 +139,7 @@ sleep 1
 debugmode=true;
 
 # memorize avgPrecision for pre labels and post Labels
-seconds=1.0
+seconds=0.03
 cpCsvfile=$csvfile
 
 function ShowProgress {
@@ -164,12 +165,22 @@ microtime() {
 now=$(date '+%d/%m/%Y %H:%M:%S');
 echo "Script started: $now";
 
+fileinfo=$(tail -n +"2" $cpCsvfile | head -"1")
+read -ra line <<< "$fileinfo"
+framesPerSecond=${line[3]}
+#echo $framesPerSecond
+intervall=$(echo "$labelCnt * $seconds * $framesPerSecond" | bc)
+#echo $intervall
+intervall=$(echo $(printf '%.f' $intervall))
+#echo "Intervall" $intervall
+#sleep 10
+
 timecounter=0
 # Loop through the file
-[ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
+[ ! -f $csvfile ] && { echo "$csvfile file not found"; exit 99; }
 while read flname w h fps fcnt fnr tcode label prec
 do
-  pStart=$(microtime)
+  #pStart=$(microtime)
 
   # Check condition for continue or break
   # If it is the first line, then skip it, contains only the header.
@@ -209,8 +220,16 @@ do
   # echo "Precision of the label : $prec"
 
   # Insert values into the filter file
-  intervall=$(echo "$labelCnt * $seconds * $fps" | bc)
-  intervall=$(echo $intervall | awk '{print ($0-int($0)<0.499)?int($0):int($0)+1}')
+  # Performance problem - Bottleneck - calculation now outside of the loop
+  # intervall is for the whole file the same
+  #if [ "$doAvgCalculation" = true ]
+  #then
+    #intervall=$(echo "$labelCnt * $seconds * $fps" | bc)
+    #intervall=$(printf '%.f' $intervall)
+    #intervall=$(echo $intervall | awk '{print ($0-int($0)<0.499)?int($0):int($0)+1}')
+    #intervall=$(echo ${intervall%.*})
+  #fi
+
   lnLen=${#map_labelNames[@]}
   for (( i=0; i<${lnLen}; i++ ));
   do
@@ -220,67 +239,91 @@ do
       # echo "Label Count: " $labelCnt
       # echo "Seconds: " $seconds
       # echo "Fps: " $fps
-
-      previous=$(echo "$iterationCnt - $intervall" | bc)
-      next=$(echo "$iterationCnt + $intervall" | bc)
-
-      # echo "Iteration Nr: " $iterationCnt
-      # echo "Intervall: " $intervall
-      # echo "Look at: " $(echo "$next - $previous" | bc)
-
-      if [[ ! $previous -gt 0 ]]; then
-        let previous=2
-        # echo "Previous is smaller, Now: " $previous
-      fi
-
-      if [[ $next -gt $lineCnt ]]; then
-        let next=lineCnt
-        # echo "Next is bigger, Now: " $next
-      fi
-
-      sumPrediction=0.0
-      sublineCnt=0
-
-      # echo "COMMAND: "
-      # echo "tail -n +"$previous" $cpCsvfile"
-      # echo "head -"$((next - previous))""
-      # echo "-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*"
-      while read flname2 w2 h2 fps2 fcnt2 fnr2 tcode2 label2 prec2
-      do
-        if [[ "${label//[$' \t\n\r']/}" == "${label2//[$' \t\n\r']/}" ]]
-        then
-          # echo "Works ..."
-          # echo "Name : $flname2"
-          # echo "TimeCode : $tcode2"
-          # echo "Label : $label2"
-          # echo "Precision : $prec2"
-
-          sumPrediction=$(echo "$sumPrediction + $prec2" | bc -l)
-
-          let sublineCnt=sublineCnt+1
-          # echo "Summed Prediciton: " $sumPrediction
-          # echo "Subline Count: " $sublineCnt
-        fi
-      done < <(tail -n +"$previous" $cpCsvfile | head -"$((next - previous))");
-
-      avgPrediction=$(echo "$sumPrediction / $sublineCnt" | bc -l )
-      # echo "Average Prediciton: " $avgPrediction
-      avgPrediction=$(printf '%.7f' $avgPrediction)
-
-      #echo "Average Prediciton: " $avgPrediction
-      #echo "-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*"
-      #sleep 3
-
-      prec=$(printf '%.7f' $prec)
-
-      if [ $iterationCnt -eq $lineCnt ]
+      if [ "$doAvgCalculation" = true ]
       then
-        echo "($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction);"  >> $filterfile
-        #echo "Values to insert as filter: ($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction);"
+
+        let previous=iterationCnt-intervall;
+        let next=iterationCnt+intervall;
+        #previous=$(echo "$iterationCnt - $intervall" | bc)
+        #next=$(echo "$iterationCnt + $intervall" | bc)
+        #echo $previous
+        #echo $next
+        # echo "Iteration Nr: " $iterationCnt
+        # echo "Intervall: " $intervall
+        # echo "Look at: " $(echo "$next - $previous" | bc)
+
+        if [[ ! $previous -gt 0 ]]; then
+          let previous=2
+          # echo "Previous is smaller, Now: " $previous
+        fi
+
+        if [[ $next -gt $lineCnt ]]; then
+          let next=lineCnt
+          # echo "Next is bigger, Now: " $next
+        fi
+
+        sumPrediction=0
+        sublineCnt=0
+        let lineNr=next-previous;
+        # echo "COMMAND: "
+        # echo "tail -n +"$previous" $cpCsvfile"
+        # echo "head -"$((next - previous))""
+        # echo "-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*"
+        while read flname2 w2 h2 fps2 fcnt2 fnr2 tcode2 label2 prec2
+        do
+          if [[ "${label//[$' \t\n\r']/}" == "${label2//[$' \t\n\r']/}" ]]
+          then
+            # echo "Works ..."
+            # echo "Name : $flname2"
+            # echo "TimeCode : $tcode2"
+            # echo "Label : $label2"
+            # echo "Precision : $prec2"
+
+            #sumPrediction=$(echo "$sumPrediction + $prec2" | bc -l)
+            #echo $prec2
+            let sumPrediction=sumPrediction+prec2
+
+            let sublineCnt=sublineCnt+1
+            # echo "Summed Prediciton: " $sumPrediction
+            # echo "Subline Count: " $sublineCnt
+          fi
+        done < <(tail -n +"$previous" $cpCsvfile | head -"$lineNr");
+
+        #avgPrediction=$(echo "$sumPrediction / $sublineCnt" | bc -l )
+        let "avgPrediction=sumPrediction/sublineCnt"
+
+        #echo "Average Prediciton: " $avgPrediction
+        #avgPrediction=$(printf '%.7f' $avgPrediction)
+
+        #echo "Average Prediciton: " $avgPrediction
+        #echo "-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*-/-*"
+        #sleep 3
+
+        #prec=$(printf '%.7f' $prec)
+
+        if [ $iterationCnt -eq $lineCnt ]
+        then
+          echo "($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction);"  >> $filterfile
+          #echo "Values to insert as filter: ($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction);"
+        else
+          echo "($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction),"  >> $filterfile
+          #echo "Values to insert as filter: ($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction),"
+        fi
+
       else
-        echo "($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction),"  >> $filterfile
-        #echo "Values to insert as filter: ($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction),"
-      fi
+
+        if [ $iterationCnt -eq $lineCnt ]
+        then
+          echo "($classId, ${map_labelIDs[$i]}, $prec, 0.0);"  >> $filterfile
+          #echo "Values to insert as filter: ($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction);"
+        else
+          echo "($classId, ${map_labelIDs[$i]}, $prec, 0.0),"  >> $filterfile
+          #echo "Values to insert as filter: ($classId, ${map_labelIDs[$i]}, $prec, $avgPrediction),"
+        fi
+
+      fi #end if doAvgCalculation == true
+
+
     fi
   done
 
@@ -294,9 +337,9 @@ do
   let iterationCnt=iterationCnt+1
 
 
-pEnd=$(microtime)
-DIFF=$(echo "$pEnd - $pStart" | bc)
-ShowProgress ${iterationCnt} ${lineCnt} ${DIFF} $iterationCnt $lineCnt
+#pEnd=$(microtime)
+#DIFF=$(echo "$pEnd - $pStart" | bc)
+#ShowProgress ${iterationCnt} ${lineCnt} ${DIFF} $iterationCnt $lineCnt
 
 done < $csvfile
 IFS=$OLDIFS

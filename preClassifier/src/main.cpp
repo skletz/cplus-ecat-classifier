@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
     DLOG(INFO) << "Process started ..." << std::endl;
     
     boost::program_options::variables_map args;
-
+    
     try
     {
         args = processProgramOptions(argc, argv);
@@ -76,7 +76,7 @@ std::string help(const boost::program_options::options_description& _desc)
 bool init(boost::program_options::variables_map _args){
     
     bool areArgumentsValid = true;
-
+    
     if(verbose)
         std::cout << "Initialize cvSketch parameter ..." << std::endl;
     
@@ -93,7 +93,7 @@ bool init(boost::program_options::variables_map _args){
     if(_args.find("input") != _args.end()){
         inputDir = _args["input"].as<std::string>();
     }
-
+    
     if(_args.find("output") != _args.end()){
         outputDir = _args["output"].as<std::string>();
     }
@@ -113,7 +113,7 @@ bool init(boost::program_options::variables_map _args){
     if(_args.find("labels") != _args.end()){
         labels = _args["labels"].as<std::string>();
     }
-
+    
     if (!boost::filesystem::is_directory(inputDir)) {
         LOG(ERROR) << "Input Directory: " <<  ((inputDir == "") ? "<No Parameter given>" : inputDir) << " does not exit." << std::endl;
         areArgumentsValid = false;
@@ -146,7 +146,7 @@ bool init(boost::program_options::variables_map _args){
             areArgumentsValid = false;
         }
     }
-
+    
     //ToDo check if all parameters are valid, otherwise abort
     LOG(INFO) << "Initialized Arguments: " << std::endl;
     LOG(INFO) << "--input: " << inputDir << std::endl;
@@ -194,7 +194,7 @@ boost::program_options::variables_map processProgramOptions(const int argc, cons
         LOG(ERROR) << e.what() << std::endl;
         LOG(ERROR) << help(visible) << std::endl;
     }
- 
+    
     if (args.count("help")) {
         LOG(INFO) << help(visible) << std::endl;
     }

@@ -41,7 +41,7 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
             const boost::filesystem::path &file = entry;
             if(!Util::isFileHidden(file))
             {
-               
+                
                 cv::VideoCapture stream(file.string());
                 if (!stream.isOpened())
                 {
@@ -84,24 +84,24 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
                     stream.set(CV_CAP_PROP_POS_FRAMES, iFrame);
                     stream.grab();
                     stream.retrieve(frame);
-
+                    
                     if (frame.empty())
                         continue;
-
+                    
                     double t = (double)cv::getTickCount();
-
+                    
                     std::vector<Prediction> predictions = classifier.Classify(frame);
-
+                    
                     t = ((double)cv::getTickCount() - t)/cv::getTickFrequency();
                     elapsedTime += t;
-
-
+                    
+                    
                     /* Print the top N predictions. */
                     std::stringstream text;
                     for (size_t i = 0; i < predictions.size(); ++i) {
                         Prediction p = predictions[i];
                         text << std::fixed << std::setprecision(4) << p.second << " - \"" << p.first << "\"" << "; ";
-
+                        
                         output << file.filename().string() << "; ";
                         output << width << "; ";
                         output << height << "; ";
@@ -113,7 +113,7 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
                         output << std::fixed << std::setprecision(7) << p.second;
                         output << std::endl;
                     }
-
+                    
                     frame.release();
                 }
                 
