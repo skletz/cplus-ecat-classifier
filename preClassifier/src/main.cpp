@@ -26,6 +26,10 @@ std::string trainedModel;
 std::string mean;
 std::string labels;
 
+bool useVdolistFilter = false;
+std::string vdolist;
+std::string filterVdolist;
+
 int main(int argc, const char * argv[]) {
     
     //Initialize Google's logging library
@@ -54,6 +58,20 @@ int main(int argc, const char * argv[]) {
     }
     
     FrameClassification* frameClassifiaction = new FrameClassification(model, trainedModel, mean, labels);
+    
+    if(useVdolistFilter){
+        
+        frameClassifiaction->mFilterVdolist = filterVdolist;
+        frameClassifiaction->mVdolist = vdolist;
+        
+        if(frameClassifiaction->mFilterVdolist == "NOT IN"){
+            frameClassifiaction->mUseFilterNotIn = true;
+        }else if(frameClassifiaction->mFilterVdolist == "IN"){
+            frameClassifiaction->mUseFilterIn = true;
+        }
+
+    }
+    
     frameClassifiaction->run(inputDir, outputDir);
     delete frameClassifiaction;
     
@@ -88,6 +106,30 @@ bool init(boost::program_options::variables_map _args){
     if (_args.find("display") != _args.end())
     {
         display = true;
+    }
+    
+    if (_args.find("filterVdols") != _args.end())
+    {
+        
+        filterVdolist = _args["filterVdols"].as<std::string>();
+        
+        if(filterVdolist == "NOT IN" || filterVdolist == "IN"){
+            filterVdolist = _args["filterVdols"].as<std::string>();
+        }else{
+            LOG(ERROR) << "ERROR: Declared filter option is not available: " << filterVdolist  << std::endl;
+            areArgumentsValid = false;
+        }
+        
+        vdolist = _args["vdols"].as<std::string>();
+        
+        if(!boost::filesystem::exists(vdolist)){
+            LOG(ERROR) << "Videolist File: " <<  ((vdolist == "") ? "<No Parameter given>" : vdolist) << " does not exit." << std::endl;
+            areArgumentsValid = false;
+        }
+        
+        if(areArgumentsValid)
+            useVdolistFilter = true;
+
     }
     
     if(_args.find("input") != _args.end()){
@@ -147,6 +189,8 @@ bool init(boost::program_options::variables_map _args){
         }
     }
     
+    
+    
     //ToDo check if all parameters are valid, otherwise abort
     LOG(INFO) << "Initialized Arguments: " << std::endl;
     LOG(INFO) << "--input: " << inputDir << std::endl;
@@ -173,6 +217,8 @@ boost::program_options::variables_map processProgramOptions(const int argc, cons
     ("trained", boost::program_options::value<std::string>(), "the trained model (./snapshot.caffemodel)")
     ("mean", boost::program_options::value<std::string>(), "the mean (./mean.binaryproto)")
     ("labels", boost::program_options::value<std::string>(), "the labels (labels.txt)")
+    ("filterVdols", boost::program_options::value<std::string>(), "possible values: IN, NOT IN")
+    ("vdols", boost::program_options::value<std::string>(), "the videos that are either skipped or processed based on the filter constrained")
     ;
     
     boost::program_options::options_description visible("Allowed options");

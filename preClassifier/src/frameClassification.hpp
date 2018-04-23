@@ -26,6 +26,12 @@ public:
     std::string mMeanFile;
     std::string mLabelFile;
     
+    bool mUseFilterIn;
+    bool mUseFilterNotIn;
+    
+    std::string mVdolist;
+    std::string mFilterVdolist;
+    
     FrameClassification(std::string _modelFile, std::string _trainedFile, std::string _meanFile, std::string _labelFile);
     
     /**

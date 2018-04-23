@@ -16,6 +16,8 @@ FrameClassification::FrameClassification(std::string _modelFile, std::string _tr
     this->mTrainedFile = _trainedFile;
     this->mMeanFile = _meanFile;
     this->mLabelFile = _labelFile;
+    this->mUseFilterIn = false;
+    this->mUseFilterNotIn = false;
 }
 
 void FrameClassification::run(std::string _inputDir, std::string _outputDir)
@@ -31,6 +33,16 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
     
     LOG(INFO) << "Number of video files: " << fileCount;
     
+    std::ifstream vdolistInputStream;
+    std::map<std::string, int> mapOfFiles;
+    if(this->mUseFilterIn || this->mUseFilterNotIn){
+        vdolistInputStream.open(this->mVdolist, std::ios::in |  std::ios::out);
+        std::string videoFileName;
+        while(vdolistInputStream >> videoFileName){
+            mapOfFiles[videoFileName]++;
+        }
+    }
+    
     //Process video files
     if(boost::filesystem::is_directory(_inputDir))
     {
@@ -39,9 +51,14 @@ void FrameClassification::run(std::string _inputDir, std::string _outputDir)
         for(auto& entry : boost::make_iterator_range(boost::filesystem::directory_iterator(_inputDir), {}))
         {
             const boost::filesystem::path &file = entry;
-            if(!Util::isFileHidden(file))
+            int cntFilesInList = mapOfFiles[file.filename().string()];
+            bool isInList = cntFilesInList != 0;
+            bool isNotInList = cntFilesInList == 0;
+            
+            bool considerVideofile = (isInList && this->mUseFilterIn) || (isNotInList && this->mUseFilterNotIn);
+            
+            if(!Util::isFileHidden(file) && considerVideofile)
             {
-                
                 cv::VideoCapture stream(file.string());
                 if (!stream.isOpened())
                 {
